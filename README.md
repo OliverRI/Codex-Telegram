@@ -207,6 +207,24 @@ El script [scripts/start-bridge.ps1](scripts/start-bridge.ps1) reinicia el proce
 
 El repo incluye una skill reutilizable en [skills/telegram-codex-bridge](skills/telegram-codex-bridge) para que Codex pueda ayudarte a instalar, configurar y operar este bridge sin meter secretos ni agentes privados en Git.
 
+### Instalar la skill en tu Codex local
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\install-codex-skill.ps1
+```
+
+Luego puedes pedirle a Codex algo como:
+
+```text
+Usa $telegram-codex-bridge para configurar este repo sin exponer secretos en Git.
+```
+
+### Desinstalar la skill
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\uninstall-codex-skill.ps1
+```
+
 ## Licencia
 
 MIT. Consulta [LICENSE](LICENSE).

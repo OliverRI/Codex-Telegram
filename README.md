@@ -202,3 +202,11 @@ El script [scripts/start-bridge.ps1](scripts/start-bridge.ps1) reinicia el proce
 - Anadir cancelacion y plantillas de tareas
 - Mover el estado a SQLite
 - Empaquetarlo mejor como skill de Codex o instalacion guiada
+
+## Skill de Codex
+
+El repo incluye una skill reutilizable en [skills/telegram-codex-bridge](skills/telegram-codex-bridge) para que Codex pueda ayudarte a instalar, configurar y operar este bridge sin meter secretos ni agentes privados en Git.
+
+## Licencia
+
+MIT. Consulta [LICENSE](LICENSE).

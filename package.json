@@ -1,6 +1,6 @@
 {
   "name": "codex-telegram",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "Telegram bridge for managing Codex agents on Windows",
   "type": "module",
   "main": "dist/index.js",
@@ -18,7 +18,7 @@
     "windows"
   ],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "dotenv": "^17.2.3",
     "grammy": "^1.38.3",

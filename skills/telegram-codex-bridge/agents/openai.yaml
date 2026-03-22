@@ -1,0 +1,7 @@
+interface:
+  display_name: "Telegram Codex Bridge"
+  short_description: "Install and operate the Telegram bridge"
+  default_prompt: "Use $telegram-codex-bridge to configure this repository, keep private agent settings out of Git, and validate the local Telegram-to-Codex bridge."
+
+policy:
+  allow_implicit_invocation: true

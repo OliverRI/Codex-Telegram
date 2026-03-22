@@ -1,0 +1,16 @@
+{
+  "agents": [
+    {
+      "id": "backend",
+      "name": "Backend Agent",
+      "cwd": "D:\\Repos\\my-project",
+      "model": "gpt-5.4",
+      "sandbox": "workspace-write",
+      "skipGitRepoCheck": false,
+      "fullAuto": true,
+      "allowedTelegramUserIds": [123456789],
+      "allowedChatIds": [],
+      "extraArgs": []
+    }
+  ]
+}

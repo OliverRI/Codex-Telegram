@@ -271,6 +271,25 @@ function createNotifier(bot: Bot, chatId: number): TaskNotifier {
     },
     async failed({ agent, job, error }) {
       await bot.api.sendMessage(chatId, `Fallo en ${agent.id}.\njob=${job.id}\nerror=${error}`);
+    },
+    async delegating({ fromAgent, toAgent, sourceJob, mode, message, returnToSource }) {
+      await bot.api.sendMessage(
+        chatId,
+        [
+          `${fromAgent.id} delega en ${toAgent.id}.`,
+          `source_job=${sourceJob.id}`,
+          `mode=${mode}`,
+          `return_to_source=${returnToSource}`,
+          "",
+          `mensaje=${truncateForTelegram(message)}`
+        ].join("\n")
+      );
+    },
+    async delegationFailed({ fromAgent, sourceJob, error }) {
+      await bot.api.sendMessage(
+        chatId,
+        `Delegacion fallida desde ${fromAgent.id}.\nsource_job=${sourceJob.id}\nerror=${error}`
+      );
     }
   };
 }
@@ -448,4 +467,12 @@ function isAllowedAttachmentPath(agent: AgentConfig, candidatePath: string): boo
 function normalizePathForComparison(filePath: string): string {
   const resolved = path.resolve(filePath);
   return process.platform === "win32" ? resolved.toLowerCase() : resolved;
+}
+
+function truncateForTelegram(value: string, maxLength = 600): string {
+  if (value.length <= maxLength) {
+    return value;
+  }
+
+  return `${value.slice(0, maxLength - 3)}...`;
 }

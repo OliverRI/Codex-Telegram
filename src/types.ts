@@ -59,6 +59,8 @@ export interface PersistedJob {
   agentId: string;
   chatId: number;
   userId?: number;
+  parentJobId?: string;
+  chainDepth: number;
   prompt: string;
   mode: "new" | "resume";
   status: "queued" | "running" | "completed" | "failed";

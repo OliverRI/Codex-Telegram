@@ -16,7 +16,7 @@ async function main() {
 
   const queue = new AgentTaskQueue();
   const adapter = new CodexCliAdapter(config.codexBin, logger);
-  const executionService = new AgentExecutionService(config, store, queue, adapter, logger);
+  const executionService = new AgentExecutionService(config, registry, store, queue, adapter, logger);
   const bot = createTelegramBot({
     config,
     registry,

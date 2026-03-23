@@ -11,10 +11,12 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 - Telegram attachment delivery for files explicitly requested by the user
 - Attachment safety checks that restrict sending to files inside the agent working scope
 - Prompt guidance so agents can declare attachments using a dedicated bridge block
+- Agent-to-agent handoff orchestration with optional return to the source agent
 
 ### Improved
 
 - Documentation for file delivery through Telegram
+- Documentation for agent delegation through the bridge
 
 ## [0.1.0] - 2026-03-23
 

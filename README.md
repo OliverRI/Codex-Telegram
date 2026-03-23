@@ -151,6 +151,30 @@ Para que funcione bien en Windows:
 - Declara alias utiles en `pathHints`, por ejemplo `desktop` o `escritorio`
 - Si acabas de cambiar esas rutas, usa `/new <agentId> ...` para abrir un hilo nuevo
 
+## Colaboracion entre agentes
+
+El bridge ya puede orquestar una delegacion simple entre agentes.
+
+Flujo:
+
+- Un agente responde normalmente
+- Si necesita ayuda de otro, devuelve un bloque interno `agent_handoff`
+- El bridge ejecuta al agente objetivo
+- Si `return_to_source=true`, el bridge reanuda despues el agente original con la respuesta del agente delegado
+
+La delegacion esta limitada de forma intencional:
+
+- Solo se procesa un handoff por ejecucion
+- No se permite delegar en el mismo agente
+- La delegacion debe respetar los permisos del usuario y del agente objetivo
+- El retorno al agente origen se programa como una nueva ejecucion para evitar bloqueos de cola
+
+Esto permite patrones como:
+
+- `Omega` delega analisis de codigo en `Fenix`
+- `Fenix` devuelve hallazgos
+- `Omega` retoma el hilo y responde al usuario con una conclusion final
+
 ## Flujo recomendado
 
 1. Arranca el bridge con `npm run dev`

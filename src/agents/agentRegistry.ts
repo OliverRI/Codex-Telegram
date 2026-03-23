@@ -12,9 +12,12 @@ const agentSchema = z.object({
   sandbox: z.enum(["read-only", "workspace-write", "danger-full-access"]).default("workspace-write"),
   skipGitRepoCheck: z.boolean().default(false),
   fullAuto: z.boolean().default(true),
+  dangerouslyBypassApprovalsAndSandbox: z.boolean().default(false),
   forceNewThreadOnEachRun: z.boolean().default(false),
   allowedTelegramUserIds: z.array(z.number().int()).default([]),
   allowedChatIds: z.array(z.number().int()).default([]),
+  addDirs: z.array(z.string()).default([]),
+  pathHints: z.record(z.string(), z.string()).default({}),
   extraArgs: z.array(z.string()).default([])
 });
 
@@ -34,7 +37,8 @@ export class AgentRegistry {
     const parsed = agentsFileSchema.parse(JSON.parse(content));
     const agents: AgentConfig[] = parsed.agents.map((agent) => ({
       ...agent,
-      cwd: path.isAbsolute(agent.cwd) ? agent.cwd : path.resolve(process.cwd(), agent.cwd)
+      cwd: path.isAbsolute(agent.cwd) ? agent.cwd : path.resolve(process.cwd(), agent.cwd),
+      addDirs: agent.addDirs.map((dir) => (path.isAbsolute(dir) ? dir : path.resolve(process.cwd(), dir)))
     }));
 
     return new AgentRegistry(agents);

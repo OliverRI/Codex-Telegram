@@ -9,9 +9,12 @@ export interface AgentConfig {
   sandbox: SandboxMode;
   skipGitRepoCheck: boolean;
   fullAuto: boolean;
+  dangerouslyBypassApprovalsAndSandbox: boolean;
   forceNewThreadOnEachRun: boolean;
   allowedTelegramUserIds: number[];
   allowedChatIds: number[];
+  addDirs: string[];
+  pathHints: Record<string, string>;
   extraArgs: string[];
 }
 

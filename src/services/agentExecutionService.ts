@@ -91,6 +91,7 @@ export class AgentExecutionService {
   private async runJob(agent: AgentConfig, job: PersistedJob, notifier: TaskNotifier): Promise<void> {
     const previousState = await this.store.getAgentState(agent.id);
     const shouldResume = job.mode === "resume" && !agent.forceNewThreadOnEachRun && previousState?.threadId;
+    const prompt = buildAgentPrompt(agent, job.prompt);
 
     const runningJob: PersistedJob = {
       ...job,
@@ -110,7 +111,7 @@ export class AgentExecutionService {
     try {
       const result = await this.adapter.run({
         agent,
-        prompt: job.prompt,
+        prompt,
         mode: shouldResume ? "resume" : "new",
         previousThreadId: shouldResume ? previousState?.threadId : undefined,
         timeoutMs: this.appConfig.defaultRunTimeoutMs
@@ -169,4 +170,36 @@ function truncate(value: string, maxLength: number): string {
   }
 
   return `${value.slice(0, maxLength - 3)}...`;
+}
+
+function buildAgentPrompt(agent: AgentConfig, userPrompt: string): string {
+    const guidance: string[] = [
+      "You are running through a Telegram-to-Codex bridge on Windows.",
+      `Primary working directory: ${agent.cwd}`,
+      `Sandbox mode: ${agent.sandbox}`,
+      agent.dangerouslyBypassApprovalsAndSandbox
+        ? "Sandbox bypass is enabled for this agent because the Windows shell sandbox may fail in this environment."
+        : "Sandbox bypass is disabled for this agent.",
+      "If the user asks about local files or folders, inspect them with shell commands instead of guessing."
+    ];
+
+  if (agent.addDirs.length > 0) {
+    guidance.push("Additional allowed directories:");
+    for (const dir of agent.addDirs) {
+      guidance.push(`- ${dir}`);
+    }
+  }
+
+  const hintEntries = Object.entries(agent.pathHints);
+  if (hintEntries.length > 0) {
+    guidance.push("Path hints to resolve user language into real filesystem paths:");
+    for (const [label, resolvedPath] of hintEntries) {
+      guidance.push(`- ${label}: ${resolvedPath}`);
+    }
+  }
+
+  guidance.push("When the user mentions Desktop or Escritorio and a path hint exists, use that exact path.");
+  guidance.push("If an old conversation context suggests you cannot access a path, re-check the filesystem before answering.");
+
+  return `${guidance.join("\n")}\n\nUser request:\n${userPrompt}`;
 }

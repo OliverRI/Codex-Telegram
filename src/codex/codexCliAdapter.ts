@@ -128,20 +128,30 @@ export class CodexCliAdapter {
       args.push("-m", request.agent.model);
     }
 
+    if (request.agent.dangerouslyBypassApprovalsAndSandbox) {
+      args.push("--dangerously-bypass-approvals-and-sandbox");
+    }
+
     if (!isResume && request.agent.profile) {
       args.push("-p", request.agent.profile);
     }
 
-    if (!isResume) {
+    if (!isResume && !request.agent.dangerouslyBypassApprovalsAndSandbox) {
       args.push("-s", request.agent.sandbox);
     }
 
-    if (request.agent.fullAuto) {
+    if (request.agent.fullAuto && !request.agent.dangerouslyBypassApprovalsAndSandbox) {
       args.push("--full-auto");
     }
 
     if (request.agent.skipGitRepoCheck) {
       args.push("--skip-git-repo-check");
+    }
+
+    if (!isResume) {
+      for (const dir of request.agent.addDirs) {
+        args.push("--add-dir", dir);
+      }
     }
 
     args.push(...request.agent.extraArgs);

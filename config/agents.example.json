@@ -8,8 +8,17 @@
       "sandbox": "workspace-write",
       "skipGitRepoCheck": false,
       "fullAuto": true,
+      "dangerouslyBypassApprovalsAndSandbox": false,
+      "forceNewThreadOnEachRun": false,
       "allowedTelegramUserIds": [123456789],
       "allowedChatIds": [],
+      "addDirs": [
+        "D:\\Users\\YourUser\\Desktop"
+      ],
+      "pathHints": {
+        "desktop": "D:\\Users\\YourUser\\Desktop",
+        "escritorio": "D:\\Users\\YourUser\\Desktop"
+      },
       "extraArgs": []
     }
   ]

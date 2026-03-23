@@ -72,6 +72,9 @@ Campos:
 - `STATE_FILE`: ruta del estado persistente
 - `CODEX_BIN`: binario de Codex
 - `DEFAULT_RUN_TIMEOUT_MS`: timeout maximo por ejecucion
+- `addDirs`: directorios extra accesibles para el agente en ejecuciones nuevas
+- `pathHints`: alias de lenguaje natural para rutas reales como `Escritorio` o `Desktop`
+- `dangerouslyBypassApprovalsAndSandbox`: desactiva el sandbox de Codex para ese agente; util solo cuando el sandbox de Windows falle y el agente sea de confianza
 
 ## Ejemplo de agentes
 
@@ -88,9 +91,17 @@ Archivo `config/agents.local.json`:
       "sandbox": "workspace-write",
       "skipGitRepoCheck": false,
       "fullAuto": true,
+      "dangerouslyBypassApprovalsAndSandbox": false,
       "forceNewThreadOnEachRun": false,
       "allowedTelegramUserIds": [123456789],
       "allowedChatIds": [],
+      "addDirs": [
+        "D:\\Users\\YourUser\\Desktop"
+      ],
+      "pathHints": {
+        "desktop": "D:\\Users\\YourUser\\Desktop",
+        "escritorio": "D:\\Users\\YourUser\\Desktop"
+      },
       "extraArgs": []
     },
     {
@@ -101,9 +112,12 @@ Archivo `config/agents.local.json`:
       "sandbox": "read-only",
       "skipGitRepoCheck": false,
       "fullAuto": true,
+      "dangerouslyBypassApprovalsAndSandbox": false,
       "forceNewThreadOnEachRun": true,
       "allowedTelegramUserIds": [123456789],
       "allowedChatIds": [],
+      "addDirs": [],
+      "pathHints": {},
       "extraArgs": []
     }
   ]
@@ -126,7 +140,8 @@ Archivo `config/agents.local.json`:
 3. Ejecuta `/whoami` para obtener tu `user_id`
 4. Mete ese `user_id` en `.env` y en `config/agents.local.json`
 5. Reinicia el bridge
-6. Prueba `/agents`, `/status <agentId>` y `/new <agentId> <prompt>`
+6. Si has cambiado `addDirs` o `pathHints`, usa `/new <agentId> ...` al menos una vez para arrancar un hilo nuevo con ese contexto
+7. Prueba `/agents`, `/status <agentId>` y `/new <agentId> <prompt>`
 
 ## Dejarlo siempre encendido en Windows
 
@@ -185,6 +200,7 @@ El script [scripts/start-bridge.ps1](scripts/start-bridge.ps1) reinicia el proce
 - No publiques `config/agents.local.json`
 - Usa agentes `read-only` para tareas de revision
 - Usa `workspace-write` solo en repos concretos
+- Activa `dangerouslyBypassApprovalsAndSandbox` solo en agentes locales de confianza y solo cuando el sandbox de Windows falle de verdad
 - Evita usar un agente apuntando a `D:\` o rutas demasiado amplias salvo que lo necesites de verdad
 - Si expones el bot en grupos, limita usuarios y chats permitidos
 

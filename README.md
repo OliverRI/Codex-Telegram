@@ -133,6 +133,24 @@ Archivo `config/agents.local.json`:
 - `/new <agentId> <prompt>`
 - `/whoami`
 
+## Envio de archivos a Telegram
+
+El bridge puede adjuntar archivos si el usuario los pide expresamente y el agente consigue localizarlos.
+
+Condiciones:
+
+- El archivo debe existir de verdad
+- Debe estar dentro de `cwd` o de alguna ruta declarada en `addDirs`
+- El agente debe devolver la ruta absoluta en el bloque interno de adjuntos que usa el bridge
+- El bot envia como maximo 5 archivos por respuesta
+- Se aplica un limite prudente de tamano por archivo para evitar fallos de envio
+
+Para que funcione bien en Windows:
+
+- Declara rutas extra en `addDirs`
+- Declara alias utiles en `pathHints`, por ejemplo `desktop` o `escritorio`
+- Si acabas de cambiar esas rutas, usa `/new <agentId> ...` para abrir un hilo nuevo
+
 ## Flujo recomendado
 
 1. Arranca el bridge con `npm run dev`

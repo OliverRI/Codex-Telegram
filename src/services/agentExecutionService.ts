@@ -200,6 +200,11 @@ function buildAgentPrompt(agent: AgentConfig, userPrompt: string): string {
 
   guidance.push("When the user mentions Desktop or Escritorio and a path hint exists, use that exact path.");
   guidance.push("If an old conversation context suggests you cannot access a path, re-check the filesystem before answering.");
+  guidance.push("If the user explicitly asks you to send one or more local files to Telegram, append this exact block at the end of your final answer with absolute file paths, one per line:");
+  guidance.push("[[telegram_attachments]]");
+  guidance.push("C:\\absolute\\path\\to\\file.ext");
+  guidance.push("[[/telegram_attachments]]");
+  guidance.push("Only include files that actually exist and only if they are inside the agent's working directory or additional allowed directories.");
 
   return `${guidance.join("\n")}\n\nUser request:\n${userPrompt}`;
 }

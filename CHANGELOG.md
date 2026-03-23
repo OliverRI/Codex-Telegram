@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 The format is based on Keep a Changelog, and this project follows Semantic Versioning as closely as practical for an early local-first tool.
 
+## [Unreleased]
+
+### Added
+
+- Telegram attachment delivery for files explicitly requested by the user
+- Attachment safety checks that restrict sending to files inside the agent working scope
+- Prompt guidance so agents can declare attachments using a dedicated bridge block
+
+### Improved
+
+- Documentation for file delivery through Telegram
+
 ## [0.1.0] - 2026-03-23
 
 ### Added

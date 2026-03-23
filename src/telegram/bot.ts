@@ -1,4 +1,6 @@
-import { Bot, BotError, Context, GrammyError, HttpError } from "grammy";
+import { InputFile, Bot, BotError, Context, GrammyError, HttpError } from "grammy";
+import fs from "node:fs";
+import path from "node:path";
 import type pino from "pino";
 import { AgentRegistry } from "../agents/agentRegistry.js";
 import { isAuthorizedForAgent, isGloballyAuthorized } from "../security/accessControl.js";
@@ -232,19 +234,39 @@ function createNotifier(bot: Bot, chatId: number): TaskNotifier {
       await bot.api.sendMessage(chatId, `Ejecutando ${agent.id}.\njob=${job.id}`);
     },
     async completed({ agent, job, threadId, responseText, warnings }) {
+      const attachmentResult = extractTelegramAttachments(responseText);
       const payload = [
         `Completado ${agent.id}.`,
         `job=${job.id}`,
         `thread=${threadId}`,
         warnings.length > 0 ? `warnings=${warnings.slice(0, 2).join(" | ")}` : undefined,
         "",
-        responseText || "(Sin respuesta textual del agente)"
+        attachmentResult.cleanedText || "(Sin respuesta textual del agente)"
       ]
         .filter(Boolean)
         .join("\n");
 
       for (const chunk of toTelegramChunks(payload)) {
         await bot.api.sendMessage(chatId, chunk);
+      }
+
+      if (attachmentResult.paths.length > 0) {
+        const sendResult = await sendTelegramAttachments(bot, chatId, agent, attachmentResult.paths);
+        if (sendResult.sent.length > 0) {
+          await bot.api.sendMessage(
+            chatId,
+            `Archivos enviados:\n${sendResult.sent.map((file) => `- ${path.basename(file)}`).join("\n")}`
+          );
+        }
+
+        if (sendResult.skipped.length > 0) {
+          await bot.api.sendMessage(
+            chatId,
+            `No pude adjuntar estos archivos:\n${sendResult.skipped
+              .map((item) => `- ${item.file}: ${item.reason}`)
+              .join("\n")}`
+          );
+        }
       }
     },
     async failed({ agent, job, error }) {
@@ -261,7 +283,8 @@ function helpText(): string {
     "/last <agentId> - ultima ejecucion registrada",
     "/run <agentId> <prompt> - reutiliza el hilo previo si existe",
     "/new <agentId> <prompt> - fuerza hilo nuevo",
-    "/whoami - muestra chat_id y user_id para permisos"
+    "/whoami - muestra chat_id y user_id para permisos",
+    "Si pides que envie un archivo por Telegram, el agente puede adjuntarlo si esta dentro de las rutas permitidas."
   ].join("\n");
 }
 
@@ -352,4 +375,77 @@ function toTelegramChunks(text: string, maxLength = 3500): string[] {
   }
 
   return chunks;
+}
+
+function extractTelegramAttachments(responseText: string): { cleanedText: string; paths: string[] } {
+  const match = responseText.match(/\[\[telegram_attachments\]\]([\s\S]*?)\[\[\/telegram_attachments\]\]/i);
+  if (!match) {
+    return {
+      cleanedText: responseText,
+      paths: []
+    };
+  }
+
+  const paths = match[1]
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  const cleanedText = responseText.replace(match[0], "").trim();
+  return { cleanedText, paths };
+}
+
+async function sendTelegramAttachments(
+  bot: Bot,
+  chatId: number,
+  agent: AgentConfig,
+  filePaths: string[]
+): Promise<{ sent: string[]; skipped: Array<{ file: string; reason: string }> }> {
+  const sent: string[] = [];
+  const skipped: Array<{ file: string; reason: string }> = [];
+  const uniquePaths = [...new Set(filePaths)].slice(0, 5);
+
+  for (const rawFile of uniquePaths) {
+    const filePath = path.resolve(rawFile);
+
+    if (!isAllowedAttachmentPath(agent, filePath)) {
+      skipped.push({ file: rawFile, reason: "ruta fuera del alcance permitido del agente" });
+      continue;
+    }
+
+    if (!fs.existsSync(filePath)) {
+      skipped.push({ file: rawFile, reason: "archivo no encontrado" });
+      continue;
+    }
+
+    const stat = fs.statSync(filePath);
+    if (!stat.isFile()) {
+      skipped.push({ file: rawFile, reason: "no es un archivo regular" });
+      continue;
+    }
+
+    const maxTelegramBytes = 45 * 1024 * 1024;
+    if (stat.size > maxTelegramBytes) {
+      skipped.push({ file: rawFile, reason: "supera el limite prudente de tamano para Telegram" });
+      continue;
+    }
+
+    await bot.api.sendDocument(chatId, new InputFile(filePath, path.basename(filePath)));
+    sent.push(filePath);
+  }
+
+  return { sent, skipped };
+}
+
+function isAllowedAttachmentPath(agent: AgentConfig, candidatePath: string): boolean {
+  const allowedRoots = [agent.cwd, ...agent.addDirs].map((dir) => normalizePathForComparison(path.resolve(dir)));
+  const normalizedCandidate = normalizePathForComparison(candidatePath);
+  return allowedRoots.some(
+    (root) => normalizedCandidate === root || normalizedCandidate.startsWith(`${root}${path.sep}`)
+  );
+}
+
+function normalizePathForComparison(filePath: string): string {
+  const resolved = path.resolve(filePath);
+  return process.platform === "win32" ? resolved.toLowerCase() : resolved;
 }

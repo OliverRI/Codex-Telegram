@@ -25,13 +25,13 @@ async function main() {
   });
 
   await bot.api.setMyCommands([
-    { command: "agents", description: "Lista agentes disponibles" },
-    { command: "status", description: "Estado de un agente" },
-    { command: "last", description: "Ultima ejecucion registrada" },
-    { command: "run", description: "Ejecuta usando el hilo existente" },
-    { command: "new", description: "Ejecuta con hilo nuevo" },
-    { command: "whoami", description: "Muestra chat_id y user_id" },
-    { command: "help", description: "Muestra ayuda" }
+    { command: "agentes", description: "Ver agentes disponibles" },
+    { command: "estado", description: "Consultar el estado de un agente" },
+    { command: "ultimo", description: "Ver la ultima actividad" },
+    { command: "ejecutar", description: "Continuar el hilo actual" },
+    { command: "nuevo", description: "Empezar una conversacion nueva" },
+    { command: "quiensoy", description: "Ver chat_id y user_id" },
+    { command: "ayuda", description: "Mostrar ayuda" }
   ]);
 
   logger.info(

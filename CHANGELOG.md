@@ -18,6 +18,7 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 - Documentation for file delivery through Telegram
 - Documentation for agent delegation through the bridge
 - Documentation for working with one main coordinator agent and specialist agents
+- Telegram command UX in Spanish with softer, assistant-style responses while keeping English aliases for compatibility
 
 ## [0.1.0] - 2026-03-23
 

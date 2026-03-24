@@ -6,7 +6,8 @@ Esta version funciona como servicio local: Telegram recibe el comando, el bridge
 
 ## Que hace
 
-- Expone comandos de Telegram como `/agents`, `/status`, `/run`, `/new` y `/last`
+- Expone una experiencia en Telegram mas cercana a un asistente personal
+- Muestra comandos en espanol como `/agentes`, `/estado`, `/ejecutar`, `/nuevo` y `/ultimo`
 - Mantiene un hilo independiente por agente
 - Serializa tareas por agente para evitar solapes
 - Guarda estado local de jobs y `thread_id`
@@ -220,12 +221,15 @@ Regla practica:
 
 ## Comandos de Telegram
 
-- `/agents`
-- `/status <agentId>`
-- `/last <agentId>`
-- `/run <agentId> <prompt>`
-- `/new <agentId> <prompt>`
-- `/whoami`
+- `/agentes`
+- `/estado <agente>`
+- `/ultimo <agente>`
+- `/ejecutar <agente> <mensaje>`
+- `/nuevo <agente> <mensaje>`
+- `/quiensoy`
+- `/ayuda`
+
+Por compatibilidad, el bridge sigue aceptando los alias anteriores en ingles (`/agents`, `/status`, `/run`, `/new`, `/last`, `/whoami`, `/help`), pero la interfaz publica del bot ya se presenta en espanol.
 
 ## Envio de archivos a Telegram
 

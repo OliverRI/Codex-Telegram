@@ -31,7 +31,7 @@ export function createTelegramBot(deps: TelegramBotDependencies) {
     }
   });
 
-  bot.command(["start", "help"], async (ctx: Context) => {
+  bot.command(["start", "help", "inicio", "ayuda"], async (ctx: Context) => {
     const chatId = ctx.chat?.id;
     if (!chatId) {
       return;
@@ -44,7 +44,7 @@ export function createTelegramBot(deps: TelegramBotDependencies) {
     await ctx.reply(helpText());
   });
 
-  bot.command("whoami", async (ctx: Context) => {
+  bot.command(["whoami", "quiensoy"], async (ctx: Context) => {
     const chatId = ctx.chat?.id;
     if (!chatId) {
       return;
@@ -55,11 +55,16 @@ export function createTelegramBot(deps: TelegramBotDependencies) {
     }
 
     await ctx.reply(
-      `chat_id=${chatId}\nuser_id=${ctx.from?.id ?? "unknown"}\nusername=${ctx.from?.username ?? "-"}`
+      [
+        "Estos datos te sirven si quieres ajustar permisos mas adelante.",
+        `chat_id=${chatId}`,
+        `user_id=${ctx.from?.id ?? "unknown"}`,
+        `username=${ctx.from?.username ?? "-"}`
+      ].join("\n")
     );
   });
 
-  bot.command("agents", async (ctx: Context) => {
+  bot.command(["agents", "agentes"], async (ctx: Context) => {
     const chatId = ctx.chat?.id;
     if (!chatId) {
       return;
@@ -70,19 +75,19 @@ export function createTelegramBot(deps: TelegramBotDependencies) {
     }
 
     const auth = getAuthContext(chatId, ctx.from?.id);
-    const agents = deps.registry
-      .getAll()
-      .filter((agent) => isAuthorizedForAgent(agent, auth));
+    const agents = deps.registry.getAll().filter((agent) => isAuthorizedForAgent(agent, auth));
 
     if (agents.length === 0) {
-      await ctx.reply("No hay agentes disponibles para este chat.");
+      await ctx.reply("Ahora mismo no tengo agentes disponibles para este chat.");
       return;
     }
 
-    await ctx.reply(agents.map((agent) => `${agent.id}: ${agent.name}\n${agent.cwd}`).join("\n\n"));
+    await ctx.reply(
+      ["Estos son los agentes que tienes disponibles:", "", ...agents.map(formatAgentSummary)].join("\n")
+    );
   });
 
-  bot.command("status", async (ctx: Context) => {
+  bot.command(["status", "estado"], async (ctx: Context) => {
     const chatId = ctx.chat?.id;
     if (!chatId) {
       return;
@@ -94,13 +99,13 @@ export function createTelegramBot(deps: TelegramBotDependencies) {
 
     const args = extractArgs(ctx.message?.text);
     if (args.length === 0) {
-      await ctx.reply("Uso: /status <agentId>");
+      await ctx.reply("Prueba asi: /estado <agente>");
       return;
     }
 
     const agent = deps.registry.getById(args[0]);
     if (!agent) {
-      await ctx.reply(`No existe el agente "${args[0]}".`);
+      await ctx.reply(`No encuentro ningun agente llamado "${args[0]}".`);
       return;
     }
 
@@ -115,7 +120,7 @@ export function createTelegramBot(deps: TelegramBotDependencies) {
     await ctx.reply(formatStatus(agent, status.runtimeState, status.queue, lastJob));
   });
 
-  bot.command("last", async (ctx: Context) => {
+  bot.command(["last", "ultimo"], async (ctx: Context) => {
     const chatId = ctx.chat?.id;
     if (!chatId) {
       return;
@@ -127,13 +132,13 @@ export function createTelegramBot(deps: TelegramBotDependencies) {
 
     const args = extractArgs(ctx.message?.text);
     if (args.length === 0) {
-      await ctx.reply("Uso: /last <agentId>");
+      await ctx.reply("Prueba asi: /ultimo <agente>");
       return;
     }
 
     const agent = deps.registry.getById(args[0]);
     if (!agent) {
-      await ctx.reply(`No existe el agente "${args[0]}".`);
+      await ctx.reply(`No encuentro ningun agente llamado "${args[0]}".`);
       return;
     }
 
@@ -145,14 +150,14 @@ export function createTelegramBot(deps: TelegramBotDependencies) {
 
     const lastJob = await deps.executionService.getLastJob(agent);
     if (!lastJob) {
-      await ctx.reply("Ese agente todavia no tiene ejecuciones registradas.");
+      await ctx.reply("Ese agente todavia no tiene actividad registrada.");
       return;
     }
 
     await ctx.reply(formatLastJob(agent, lastJob));
   });
 
-  bot.command("run", async (ctx: Context) => {
+  bot.command(["run", "ejecutar"], async (ctx: Context) => {
     const chatId = ctx.chat?.id;
     if (!chatId) {
       return;
@@ -165,7 +170,7 @@ export function createTelegramBot(deps: TelegramBotDependencies) {
     await handleRunCommand(ctx.message?.text, "resume", chatId, ctx.from?.id);
   });
 
-  bot.command("new", async (ctx: Context) => {
+  bot.command(["new", "nuevo"], async (ctx: Context) => {
     const chatId = ctx.chat?.id;
     if (!chatId) {
       return;
@@ -186,13 +191,16 @@ export function createTelegramBot(deps: TelegramBotDependencies) {
   ) {
     const parsed = parseRunCommand(text);
     if (!parsed) {
-      await bot.api.sendMessage(chatId, `Uso: /${mode === "new" ? "new" : "run"} <agentId> <prompt>`);
+      await bot.api.sendMessage(
+        chatId,
+        `Prueba asi: /${mode === "new" ? "nuevo" : "ejecutar"} <agente> <mensaje>`
+      );
       return;
     }
 
     const agent = deps.registry.getById(parsed.agentId);
     if (!agent) {
-      await bot.api.sendMessage(chatId, `No existe el agente "${parsed.agentId}".`);
+      await bot.api.sendMessage(chatId, `No encuentro ningun agente llamado "${parsed.agentId}".`);
       return;
     }
 
@@ -214,7 +222,7 @@ export function createTelegramBot(deps: TelegramBotDependencies) {
   async function ensureAuthorized(chatId: number, userId?: number): Promise<boolean> {
     const allowed = isGloballyAuthorized(deps.config, getAuthContext(chatId, userId));
     if (!allowed) {
-      await bot.api.sendMessage(chatId, "Acceso denegado.");
+      await bot.api.sendMessage(chatId, "No puedo atender este chat porque no esta autorizado.");
     }
     return allowed;
   }
@@ -224,24 +232,31 @@ export function createTelegramBot(deps: TelegramBotDependencies) {
 
 function createNotifier(bot: Bot, chatId: number): TaskNotifier {
   return {
-    async queued({ agent, job, position }) {
+    async queued({ agent, position }) {
       await bot.api.sendMessage(
         chatId,
-        `En cola para ${agent.id}.\njob=${job.id}\nposicion=${position}\nmodo=${job.mode}`
+        [
+          `He dejado tu peticion preparada para ${agent.name}.`,
+          `Va en la posicion ${position} de la cola.`,
+          position > 1 ? "Te aviso en cuanto le toque." : "Se pone con ello en cuanto quede libre."
+        ].join("\n")
       );
     },
     async started({ agent, job }) {
-      await bot.api.sendMessage(chatId, `Ejecutando ${agent.id}.\njob=${job.id}`);
+      await bot.api.sendMessage(
+        chatId,
+        [`${agent.name} ya se ha puesto con ello.`, `Si quieres seguirlo, la referencia es ${job.id}.`].join(
+          "\n"
+        )
+      );
     },
-    async completed({ agent, job, threadId, responseText, warnings }) {
+    async completed({ agent, responseText, warnings }) {
       const attachmentResult = extractTelegramAttachments(responseText);
       const payload = [
-        `Completado ${agent.id}.`,
-        `job=${job.id}`,
-        `thread=${threadId}`,
-        warnings.length > 0 ? `warnings=${warnings.slice(0, 2).join(" | ")}` : undefined,
+        `${agent.name} ya ha terminado.`,
+        warnings.length > 0 ? `Apunte tecnico: ${warnings.slice(0, 2).join(" | ")}` : undefined,
         "",
-        attachmentResult.cleanedText || "(Sin respuesta textual del agente)"
+        attachmentResult.cleanedText || "(No ha dejado una respuesta de texto.)"
       ]
         .filter(Boolean)
         .join("\n");
@@ -255,14 +270,14 @@ function createNotifier(bot: Bot, chatId: number): TaskNotifier {
         if (sendResult.sent.length > 0) {
           await bot.api.sendMessage(
             chatId,
-            `Archivos enviados:\n${sendResult.sent.map((file) => `- ${path.basename(file)}`).join("\n")}`
+            `Te he enviado estos archivos:\n${sendResult.sent.map((file) => `- ${path.basename(file)}`).join("\n")}`
           );
         }
 
         if (sendResult.skipped.length > 0) {
           await bot.api.sendMessage(
             chatId,
-            `No pude adjuntar estos archivos:\n${sendResult.skipped
+            `No he podido adjuntar estos archivos:\n${sendResult.skipped
               .map((item) => `- ${item.file}: ${item.reason}`)
               .join("\n")}`
           );
@@ -270,25 +285,36 @@ function createNotifier(bot: Bot, chatId: number): TaskNotifier {
       }
     },
     async failed({ agent, job, error }) {
-      await bot.api.sendMessage(chatId, `Fallo en ${agent.id}.\njob=${job.id}\nerror=${error}`);
-    },
-    async delegating({ fromAgent, toAgent, sourceJob, mode, message, returnToSource }) {
       await bot.api.sendMessage(
         chatId,
         [
-          `${fromAgent.id} delega en ${toAgent.id}.`,
-          `source_job=${sourceJob.id}`,
-          `mode=${mode}`,
-          `return_to_source=${returnToSource}`,
-          "",
-          `mensaje=${truncateForTelegram(message)}`
+          `No he podido completar la tarea con ${agent.name}.`,
+          `Motivo: ${error}`,
+          `Si quieres revisarlo luego, la referencia es ${job.id}.`
         ].join("\n")
+      );
+    },
+    async delegating({ fromAgent, toAgent, message, returnToSource }) {
+      await bot.api.sendMessage(
+        chatId,
+        [
+          `${fromAgent.name} va a apoyarse en ${toAgent.name}.`,
+          returnToSource ? "Despues retomara la respuesta para darte una conclusion final." : undefined,
+          "",
+          `Le ha pedido esto: ${truncateForTelegram(message)}`
+        ]
+          .filter(Boolean)
+          .join("\n")
       );
     },
     async delegationFailed({ fromAgent, sourceJob, error }) {
       await bot.api.sendMessage(
         chatId,
-        `Delegacion fallida desde ${fromAgent.id}.\nsource_job=${sourceJob.id}\nerror=${error}`
+        [
+          `${fromAgent.name} intento pedir ayuda a otro agente, pero no salio bien.`,
+          `Motivo: ${error}`,
+          `Si quieres revisarlo luego, la referencia es ${sourceJob.id}.`
+        ].join("\n")
       );
     }
   };
@@ -296,14 +322,17 @@ function createNotifier(bot: Bot, chatId: number): TaskNotifier {
 
 function helpText(): string {
   return [
-    "Comandos disponibles:",
-    "/agents - lista agentes disponibles",
-    "/status <agentId> - estado del agente",
-    "/last <agentId> - ultima ejecucion registrada",
-    "/run <agentId> <prompt> - reutiliza el hilo previo si existe",
-    "/new <agentId> <prompt> - fuerza hilo nuevo",
-    "/whoami - muestra chat_id y user_id para permisos",
-    "Si pides que envie un archivo por Telegram, el agente puede adjuntarlo si esta dentro de las rutas permitidas."
+    "Puedo ayudarte a hablar con tus agentes desde Telegram como si fuera tu asistente personal.",
+    "",
+    "Comandos principales:",
+    "/agentes - ver que agentes tienes disponibles",
+    "/estado <agente> - saber como va ese agente",
+    "/ultimo <agente> - repasar su ultima actividad",
+    "/ejecutar <agente> <mensaje> - continuar el hilo actual",
+    "/nuevo <agente> <mensaje> - empezar una conversacion nueva",
+    "/quiensoy - ver tu chat_id y user_id si quieres ajustar permisos",
+    "",
+    "Tambien puedo enviarte archivos si el agente los encuentra dentro de sus rutas permitidas."
   ].join("\n");
 }
 
@@ -352,31 +381,30 @@ function formatStatus(
   lastJob?: PersistedJob
 ): string {
   return [
-    `${agent.id}: ${agent.name}`,
-    `cwd=${agent.cwd}`,
-    `sandbox=${agent.sandbox}`,
-    `thread=${runtimeState?.threadId ?? "-"}`,
-    `last_status=${runtimeState?.lastRunStatus ?? "-"}`,
-    `last_run_at=${runtimeState?.lastRunAt ?? "-"}`,
-    `active_job=${runtimeState?.activeJobId ?? queue.activeJobId ?? "-"}`,
-    `queue_pending=${queue.pending}`,
-    `queue_waiting=${queue.size}`,
-    `last_job=${lastJob?.id ?? "-"}`
+    `${agent.name} (${agent.id})`,
+    `Carpeta principal: ${agent.cwd}`,
+    `Modo de trabajo: ${agent.sandbox}`,
+    `Ultimo estado: ${runtimeState?.lastRunStatus ?? "-"}`,
+    `Ultima actividad: ${runtimeState?.lastRunAt ?? "-"}`,
+    `Trabajo en curso: ${runtimeState?.activeJobId ?? queue.activeJobId ?? "-"}`,
+    `Tareas pendientes: ${queue.pending}`,
+    `Tareas en cola: ${queue.size}`,
+    `Ultima referencia: ${lastJob?.id ?? "-"}`
   ].join("\n");
 }
 
 function formatLastJob(agent: AgentConfig, job: PersistedJob): string {
   return [
-    `${agent.id}: ultima ejecucion`,
-    `job=${job.id}`,
-    `status=${job.status}`,
-    `mode=${job.mode}`,
-    `requested_at=${job.requestedAt}`,
-    `thread=${job.threadId ?? "-"}`,
+    `${agent.name}: ultima actividad`,
+    `Referencia: ${job.id}`,
+    `Estado: ${job.status}`,
+    `Tipo de ejecucion: ${job.mode}`,
+    `Solicitado: ${job.requestedAt}`,
+    `Hilo: ${job.threadId ?? "-"}`,
     "",
-    `prompt=${job.prompt}`,
+    `Encargo: ${job.prompt}`,
     "",
-    `preview=${job.responsePreview ?? job.error ?? "-"}`
+    `Resumen: ${job.responsePreview ?? job.error ?? "-"}`
   ].join("\n");
 }
 
@@ -475,4 +503,8 @@ function truncateForTelegram(value: string, maxLength = 600): string {
   }
 
   return `${value.slice(0, maxLength - 3)}...`;
+}
+
+function formatAgentSummary(agent: AgentConfig): string {
+  return [`- ${agent.name} (${agent.id})`, `  Trabaja desde: ${agent.cwd}`].join("\n");
 }

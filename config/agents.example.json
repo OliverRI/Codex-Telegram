@@ -1,9 +1,55 @@
 {
   "agents": [
     {
+      "id": "coordinator",
+      "name": "Coordinator Agent",
+      "cwd": "D:\\Workspaces",
+      "model": "gpt-5.4",
+      "sandbox": "workspace-write",
+      "skipGitRepoCheck": true,
+      "fullAuto": true,
+      "dangerouslyBypassApprovalsAndSandbox": false,
+      "forceNewThreadOnEachRun": false,
+      "allowedTelegramUserIds": [123456789],
+      "allowedChatIds": [],
+      "addDirs": [
+        "D:\\Users\\YourUser\\Desktop",
+        "D:\\Repos\\my-project",
+        "D:\\Repos\\telegram-bridge"
+      ],
+      "pathHints": {
+        "desktop": "D:\\Users\\YourUser\\Desktop",
+        "escritorio": "D:\\Users\\YourUser\\Desktop",
+        "project": "D:\\Repos\\my-project",
+        "bridge": "D:\\Repos\\telegram-bridge"
+      },
+      "extraArgs": []
+    },
+    {
       "id": "backend",
       "name": "Backend Agent",
       "cwd": "D:\\Repos\\my-project",
+      "model": "gpt-5.4",
+      "sandbox": "workspace-write",
+      "skipGitRepoCheck": false,
+      "fullAuto": true,
+      "dangerouslyBypassApprovalsAndSandbox": false,
+      "forceNewThreadOnEachRun": false,
+      "allowedTelegramUserIds": [123456789],
+      "allowedChatIds": [],
+      "addDirs": [
+        "D:\\Users\\YourUser\\Desktop"
+      ],
+      "pathHints": {
+        "desktop": "D:\\Users\\YourUser\\Desktop",
+        "escritorio": "D:\\Users\\YourUser\\Desktop"
+      },
+      "extraArgs": []
+    },
+    {
+      "id": "bridge",
+      "name": "Bridge Agent",
+      "cwd": "D:\\Repos\\telegram-bridge",
       "model": "gpt-5.4",
       "sandbox": "workspace-write",
       "skipGitRepoCheck": false,

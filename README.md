@@ -124,6 +124,100 @@ Archivo `config/agents.local.json`:
 }
 ```
 
+## Patron recomendado: un agente principal
+
+La forma mas comoda de usar el bridge es tener:
+
+- un agente principal o coordinador
+- uno o varios agentes especialistas
+
+Ejemplo:
+
+- `Omega`: coordinador general
+- `Fenix`: especialista del proyecto Fenix
+- `Telegram`: especialista del propio bridge
+
+Tu flujo diario puede ser simplemente hablar con `Omega`:
+
+- `/new Omega revisa el proyecto y delega si hace falta`
+- `/run Omega busca este archivo y enviamelo`
+- `/run Omega analiza el bot y si conviene delega en Telegram`
+
+Con la delegacion entre agentes, `Omega` puede pedir ayuda localmente a otros agentes configurados sin que tengas que invocarlos tu a mano.
+
+## Ejemplo de arquitectura coordinador + especialistas
+
+En un setup compartible, una estructura buena es:
+
+```json
+{
+  "agents": [
+    {
+      "id": "coordinator",
+      "name": "Coordinator Agent",
+      "cwd": "D:\\Workspaces",
+      "model": "gpt-5.4",
+      "sandbox": "workspace-write",
+      "skipGitRepoCheck": true,
+      "fullAuto": true,
+      "dangerouslyBypassApprovalsAndSandbox": false,
+      "forceNewThreadOnEachRun": false,
+      "allowedTelegramUserIds": [123456789],
+      "allowedChatIds": [],
+      "addDirs": [
+        "D:\\Users\\YourUser\\Desktop",
+        "D:\\Repos\\my-project",
+        "D:\\Repos\\telegram-bridge"
+      ],
+      "pathHints": {
+        "desktop": "D:\\Users\\YourUser\\Desktop",
+        "escritorio": "D:\\Users\\YourUser\\Desktop",
+        "project": "D:\\Repos\\my-project",
+        "bridge": "D:\\Repos\\telegram-bridge"
+      },
+      "extraArgs": []
+    },
+    {
+      "id": "backend",
+      "name": "Backend Agent",
+      "cwd": "D:\\Repos\\my-project",
+      "model": "gpt-5.4",
+      "sandbox": "workspace-write",
+      "skipGitRepoCheck": false,
+      "fullAuto": true,
+      "dangerouslyBypassApprovalsAndSandbox": false,
+      "forceNewThreadOnEachRun": false,
+      "allowedTelegramUserIds": [123456789],
+      "allowedChatIds": [],
+      "addDirs": [],
+      "pathHints": {},
+      "extraArgs": []
+    },
+    {
+      "id": "bridge",
+      "name": "Bridge Agent",
+      "cwd": "D:\\Repos\\telegram-bridge",
+      "model": "gpt-5.4",
+      "sandbox": "workspace-write",
+      "skipGitRepoCheck": false,
+      "fullAuto": true,
+      "dangerouslyBypassApprovalsAndSandbox": false,
+      "forceNewThreadOnEachRun": false,
+      "allowedTelegramUserIds": [123456789],
+      "allowedChatIds": [],
+      "addDirs": [],
+      "pathHints": {},
+      "extraArgs": []
+    }
+  ]
+}
+```
+
+Regla practica:
+
+- habla normalmente con el coordinador
+- usa los especialistas solo cuando quieras dirigir una tarea de forma manual
+
 ## Comandos de Telegram
 
 - `/agents`

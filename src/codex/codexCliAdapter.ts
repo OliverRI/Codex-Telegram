@@ -3,14 +3,17 @@ import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
 import path from "node:path";
 import type pino from "pino";
-import type { AgentRunRequest, AgentRunResult } from "../types.js";
+import type { AgentRunRequest, AgentRunResult, CodexRuntimeAdapter } from "../types.js";
 
 interface JsonEvent {
   type?: string;
   [key: string]: unknown;
 }
 
-export class CodexCliAdapter {
+export class CodexCliAdapter implements CodexRuntimeAdapter {
+  readonly transportName = "exec" as const;
+  readonly supportsNativeSkills = false;
+
   constructor(
     private readonly codexBin: string,
     private readonly logger: pino.Logger

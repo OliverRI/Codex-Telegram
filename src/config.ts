@@ -12,6 +12,9 @@ const envSchema = z.object({
   AGENTS_FILE: z.string().default("./config/agents.json"),
   STATE_FILE: z.string().default("./data/state.json"),
   CODEX_BIN: z.string().default("codex"),
+  CODEX_TRANSPORT: z.enum(["exec", "app-server"]).default("app-server"),
+  BROWSER_CHANNEL: z.enum(["chrome", "msedge"]).default("msedge"),
+  GMAIL_STORAGE_STATE_FILE: z.string().default("./secrets/gmail-storage-state.json"),
   LOG_LEVEL: z.string().default("info"),
   DEFAULT_RUN_TIMEOUT_MS: z.coerce.number().int().positive().default(900_000)
 });
@@ -43,6 +46,9 @@ export function loadAppConfig(): AppConfig {
     agentsFile: resolveFromCwd(env.AGENTS_FILE),
     stateFile: resolveFromCwd(env.STATE_FILE),
     codexBin: env.CODEX_BIN,
+    codexTransport: env.CODEX_TRANSPORT,
+    browserChannel: env.BROWSER_CHANNEL,
+    gmailStorageStateFile: resolveFromCwd(env.GMAIL_STORAGE_STATE_FILE),
     logLevel: env.LOG_LEVEL,
     defaultRunTimeoutMs: env.DEFAULT_RUN_TIMEOUT_MS
   };

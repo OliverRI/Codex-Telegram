@@ -5,6 +5,7 @@
   "type": "module",
   "main": "dist/index.js",
   "scripts": {
+    "auth:gmail": "node scripts/google-gmail-auth.mjs",
     "build": "tsc -p tsconfig.json",
     "check": "tsc -p tsconfig.json --noEmit",
     "dev": "tsx src/index.ts",
@@ -24,6 +25,7 @@
     "grammy": "^1.38.3",
     "p-queue": "^8.1.1",
     "pino": "^10.1.0",
+    "playwright": "^1.58.2",
     "zod": "^4.1.12"
   },
   "devDependencies": {

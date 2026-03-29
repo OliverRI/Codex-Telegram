@@ -3,6 +3,11 @@ import path from "node:path";
 import { z } from "zod";
 import type { AgentConfig } from "../types.js";
 
+const permissionsSchema = z.object({
+  webAccess: z.boolean().default(false),
+  gmailAccess: z.boolean().default(false)
+});
+
 const agentSchema = z.object({
   id: z.string().min(1).regex(/^[a-zA-Z0-9_-]+$/),
   name: z.string().min(1),
@@ -16,6 +21,11 @@ const agentSchema = z.object({
   forceNewThreadOnEachRun: z.boolean().default(false),
   allowedTelegramUserIds: z.array(z.number().int()).default([]),
   allowedChatIds: z.array(z.number().int()).default([]),
+  permissions: permissionsSchema.default({
+    webAccess: false,
+    gmailAccess: false
+  }),
+  allowedSkills: z.array(z.string().min(1)).default([]),
   addDirs: z.array(z.string()).default([]),
   pathHints: z.record(z.string(), z.string()).default({}),
   extraArgs: z.array(z.string()).default([])

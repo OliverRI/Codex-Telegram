@@ -3,3 +3,6 @@ dist/
 .env
 data/
 config/agents.local.json
+secrets/
+logs/
+.codex-temp/

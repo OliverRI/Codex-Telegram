@@ -1,5 +1,19 @@
 export type SandboxMode = "read-only" | "workspace-write" | "danger-full-access";
 
+export interface AgentPermissions {
+  webAccess: boolean;
+  gmailAccess: boolean;
+}
+
+export interface SkillDefinition {
+  id: string;
+  name: string;
+  description?: string;
+  path: string;
+  source: "repo" | "codex-home" | "plugin";
+  runtimeSupport: "exec" | "desktop-connector";
+}
+
 export interface AgentConfig {
   id: string;
   name: string;
@@ -13,6 +27,8 @@ export interface AgentConfig {
   forceNewThreadOnEachRun: boolean;
   allowedTelegramUserIds: number[];
   allowedChatIds: number[];
+  permissions: AgentPermissions;
+  allowedSkills: string[];
   addDirs: string[];
   pathHints: Record<string, string>;
   extraArgs: string[];
@@ -25,6 +41,9 @@ export interface AppConfig {
   agentsFile: string;
   stateFile: string;
   codexBin: string;
+  codexTransport: "exec" | "app-server";
+  browserChannel: "chrome" | "msedge";
+  gmailStorageStateFile: string;
   logLevel: string;
   defaultRunTimeoutMs: number;
 }
@@ -37,6 +56,7 @@ export interface AuthorizationContext {
 export interface AgentRunRequest {
   agent: AgentConfig;
   prompt: string;
+  selectedSkills?: SkillDefinition[];
   mode: "new" | "resume";
   previousThreadId?: string;
   timeoutMs: number;
@@ -61,6 +81,7 @@ export interface PersistedJob {
   userId?: number;
   parentJobId?: string;
   chainDepth: number;
+  skillIds?: string[];
   prompt: string;
   mode: "new" | "resume";
   status: "queued" | "running" | "completed" | "failed";
@@ -91,4 +112,10 @@ export interface QueueSnapshot {
   pending: number;
   size: number;
   activeJobId?: string;
+}
+
+export interface CodexRuntimeAdapter {
+  readonly transportName: "exec" | "app-server";
+  readonly supportsNativeSkills: boolean;
+  run(request: AgentRunRequest): Promise<AgentRunResult>;
 }

@@ -36,14 +36,20 @@ $principal = New-ScheduledTaskPrincipal `
     -LogonType Interactive `
     -RunLevel Limited
 
-Register-ScheduledTask `
-    -TaskName $TaskName `
-    -Action $action `
-    -Trigger $trigger `
-    -Settings $settings `
-    -Principal $principal `
-    -Description "Inicia el puente Telegram -> Codex al iniciar sesion" `
-    -Force | Out-Null
+try {
+    Register-ScheduledTask `
+        -TaskName $TaskName `
+        -Action $action `
+        -Trigger $trigger `
+        -Settings $settings `
+        -Principal $principal `
+        -Description "Inicia el puente Telegram -> Codex al iniciar sesion" `
+        -Force | Out-Null
+}
+catch {
+    Write-Host "No se pudo registrar la tarea programada. Si Windows bloquea este paso, usa scripts\\restart-bridge.bat para aplicar el modo alternativo sin permisos de administrador."
+    exit 1
+}
 
 Write-Host "Tarea instalada: $TaskName"
 Write-Host "Proyecto: $projectRoot"

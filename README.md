@@ -2,7 +2,7 @@
 
 Puente en TypeScript para enviar ordenes desde Telegram a agentes de Codex en Windows.
 
-Esta version funciona como servicio local: Telegram recibe el comando, el bridge lo enruta al agente configurado y Codex responde usando `exec` o `exec resume`, con persistencia de hilos, colas por agente y control basico de acceso.
+Esta version funciona como servicio local: Telegram recibe el comando, el bridge lo enruta al agente configurado y Codex responde con `app-server` como transporte principal y `exec` como fallback configurable, con persistencia de hilos, colas por agente y control basico de acceso.
 
 ## Que hace
 
@@ -49,6 +49,37 @@ npm install
 npm run dev
 ```
 
+## Vincular Gmail en 2 minutos
+
+Este proyecto ya no necesita Google Cloud ni OAuth para Gmail.
+
+La vinculacion se hace con tu propia sesion web local:
+
+1. Pon `permissions.gmailAccess=true` en el agente que vaya a usar Gmail.
+2. Ejecuta:
+
+```powershell
+npm run auth:gmail
+```
+
+3. Se abrira tu navegador local.
+4. Inicia sesion en Gmail si hace falta.
+5. Cuando veas la bandeja de entrada, vuelve a la consola y pulsa Enter.
+
+Eso guardara una sesion local en `./secrets/gmail-storage-state.json`, que no se sube a Git.
+
+Prueba inicial recomendada:
+
+```text
+/nuevo Omega revisa mi Gmail no leido
+```
+
+Prueba segura de envio:
+
+```text
+/nuevo Omega redacta y envia un correo de prueba a mi propia cuenta con asunto Prueba Codex Telegram
+```
+
 ## Variables de entorno
 
 Ejemplo minimo:
@@ -60,6 +91,7 @@ ALLOWED_TELEGRAM_CHAT_IDS=
 AGENTS_FILE=./config/agents.local.json
 STATE_FILE=./data/state.json
 CODEX_BIN=C:\Users\Oliver\AppData\Roaming\npm\codex.cmd
+CODEX_TRANSPORT=app-server
 LOG_LEVEL=info
 DEFAULT_RUN_TIMEOUT_MS=900000
 ```
@@ -72,9 +104,15 @@ Campos:
 - `AGENTS_FILE`: ruta al archivo privado de agentes
 - `STATE_FILE`: ruta del estado persistente
 - `CODEX_BIN`: binario de Codex
+- `CODEX_TRANSPORT`: `app-server` para integracion nativa de skills locales o `exec` como fallback
+- `BROWSER_CHANNEL`: navegador local que usara el bridge para integraciones web (`msedge` o `chrome`)
+- `GMAIL_STORAGE_STATE_FILE`: sesion web persistida de Gmail para lectura y envio desde el bridge
 - `DEFAULT_RUN_TIMEOUT_MS`: timeout maximo por ejecucion
 - `addDirs`: directorios extra accesibles para el agente en ejecuciones nuevas
 - `pathHints`: alias de lenguaje natural para rutas reales como `Escritorio` o `Desktop`
+- `permissions.webAccess`: habilita o bloquea el uso de web para ese agente; por defecto debe quedarse en `false`
+- `permissions.gmailAccess`: habilita o bloquea el uso de Gmail para ese agente; por defecto debe quedarse en `false`
+- `allowedSkills`: lista de habilidades que ese agente puede activar desde Telegram; usa `["*"]` para permitir cualquier skill instalada
 - `dangerouslyBypassApprovalsAndSandbox`: desactiva el sandbox de Codex para ese agente; util solo cuando el sandbox de Windows falle y el agente sea de confianza
 
 ## Ejemplo de agentes
@@ -96,6 +134,11 @@ Archivo `config/agents.local.json`:
       "forceNewThreadOnEachRun": false,
       "allowedTelegramUserIds": [123456789],
       "allowedChatIds": [],
+      "permissions": {
+        "webAccess": false,
+        "gmailAccess": false
+      },
+      "allowedSkills": ["aspnet-core"],
       "addDirs": [
         "D:\\Users\\YourUser\\Desktop"
       ],
@@ -117,6 +160,11 @@ Archivo `config/agents.local.json`:
       "forceNewThreadOnEachRun": true,
       "allowedTelegramUserIds": [123456789],
       "allowedChatIds": [],
+      "permissions": {
+        "webAccess": false,
+        "gmailAccess": false
+      },
+      "allowedSkills": [],
       "addDirs": [],
       "pathHints": {},
       "extraArgs": []
@@ -165,6 +213,11 @@ En un setup compartible, una estructura buena es:
       "forceNewThreadOnEachRun": false,
       "allowedTelegramUserIds": [123456789],
       "allowedChatIds": [],
+      "permissions": {
+        "webAccess": false,
+        "gmailAccess": false
+      },
+      "allowedSkills": ["*"],
       "addDirs": [
         "D:\\Users\\YourUser\\Desktop",
         "D:\\Repos\\my-project",
@@ -190,6 +243,11 @@ En un setup compartible, una estructura buena es:
       "forceNewThreadOnEachRun": false,
       "allowedTelegramUserIds": [123456789],
       "allowedChatIds": [],
+      "permissions": {
+        "webAccess": false,
+        "gmailAccess": false
+      },
+      "allowedSkills": ["aspnet-core"],
       "addDirs": [],
       "pathHints": {},
       "extraArgs": []
@@ -206,6 +264,11 @@ En un setup compartible, una estructura buena es:
       "forceNewThreadOnEachRun": false,
       "allowedTelegramUserIds": [123456789],
       "allowedChatIds": [],
+      "permissions": {
+        "webAccess": false,
+        "gmailAccess": false
+      },
+      "allowedSkills": ["telegram-codex-bridge"],
       "addDirs": [],
       "pathHints": {},
       "extraArgs": []
@@ -222,14 +285,115 @@ Regla practica:
 ## Comandos de Telegram
 
 - `/agentes`
+- `/habilidades [agente]`
 - `/estado <agente>`
 - `/ultimo <agente>`
-- `/ejecutar <agente> <mensaje>`
-- `/nuevo <agente> <mensaje>`
+- `/ejecutar <agente> [--habilidades skill1,skill2] <mensaje>`
+- `/nuevo <agente> [--habilidades skill1,skill2] <mensaje>`
 - `/quiensoy`
 - `/ayuda`
 
 Por compatibilidad, el bridge sigue aceptando los alias anteriores en ingles (`/agents`, `/status`, `/run`, `/new`, `/last`, `/whoami`, `/help`), pero la interfaz publica del bot ya se presenta en espanol.
+
+## Habilidades de Codex desde Telegram
+
+Puedes activar skills locales desde Telegram si el agente tiene permiso para usarlas.
+
+Configuracion por agente:
+
+```json
+{
+  "allowedSkills": ["aspnet-core", "pdf"]
+}
+```
+
+Reglas:
+
+- `allowedSkills=[]`: el agente no puede activar habilidades
+- `allowedSkills=["*"]`: el agente puede usar cualquier skill instalada localmente
+- las habilidades se descubren en `skills/` del repo, en `%USERPROFILE%\\.codex\\skills` y en los plugins instalados por Codex como Gmail o Google Drive
+- el bridge solo activa las skills que pidas explicitamente o las que menciones como `$nombre`
+- con `CODEX_TRANSPORT=app-server`, las skills locales y de `%USERPROFILE%\\.codex\\skills` se inyectan como skills nativas del runtime en vez de solo como texto
+
+Formas de uso:
+
+- `/habilidades` para ver skills instaladas
+- `/habilidades <agente>` para ver las que puede usar ese agente
+- `/ejecutar Fenix --habilidades aspnet-core revisa este proyecto`
+- `/nuevo Fenix usa $aspnet-core para revisar la arquitectura`
+
+Limites:
+
+- maximo 3 habilidades por ejecucion
+- la allowlist se aplica por agente
+- si una skill no esta instalada o no esta permitida, el bridge rechaza la ejecucion antes de encolarla
+- las skills de conectores curados como Gmail, Google Drive o Google Calendar siguen dependiendo de que el runtime exponga esos plugins como herramientas reales; hoy el bridge no los tiene operativos aunque el plugin este habilitado en Codex
+
+## Permisos de web y Gmail
+
+Los permisos se configuran por agente en `config/agents.local.json`, dentro de `permissions`:
+
+```json
+{
+  "permissions": {
+    "webAccess": false,
+    "gmailAccess": false
+  }
+}
+```
+
+Reglas:
+
+- `webAccess=false`: el bridge instruye al agente para no navegar ni buscar en internet
+- `webAccess=true`: el agente puede usar web cuando la tarea lo necesite
+- `gmailAccess=false`: el bridge instruye al agente para no leer ni enviar correo con Gmail
+- `gmailAccess=true`: el agente solo debe usar Gmail si existe una integracion real disponible en el runtime
+- Si omites `permissions`, ambos permisos quedan en `false`
+
+Si cambias estos permisos, usa `/new <agentId> ...` para abrir un hilo nuevo y evitar que el agente siga arrastrando contexto anterior.
+
+## Integracion propia de Gmail
+
+El bridge ya puede consultar y enviar correos de Gmail usando una sesion web local cuando:
+
+- `permissions.gmailAccess=true` en el agente
+- existe `GMAIL_STORAGE_STATE_FILE`
+
+Preparacion local:
+
+1. Ejecuta:
+
+```powershell
+npm run auth:gmail
+```
+
+2. Se abrira tu navegador local.
+3. Inicia sesion en Gmail manualmente.
+4. Cuando la bandeja este visible, vuelve a la consola y pulsa Enter.
+
+Eso guardara la sesion en `./secrets/gmail-storage-state.json`.
+
+Puntos importantes:
+
+- no necesitas crear un cliente OAuth
+- no necesitas Google Cloud Console
+- la sesion queda solo en local, fuera de Git
+- si Gmail te vuelve a pedir login, solo repite `npm run auth:gmail`
+
+Comportamiento actual:
+
+- si el prompt habla de Gmail, correo, email, inbox o bandeja y el agente tiene permiso, el bridge consulta Gmail antes de lanzar el turno
+- el agente recibe un bloque `GMAIL_CONTEXT` con datos reales extraidos de la sesion web del usuario
+- si el agente decide enviar un correo, el bridge lo ejecuta con la misma sesion web local
+- el envio se hace desde el bridge, no desde un conector MCP externo
+
+Ejemplos:
+
+- `/nuevo Omega revisa mi Gmail`
+- `/nuevo Omega revisa mi correo no leido`
+- `/nuevo Omega revisa mi Gmail de usuario@dominio.com`
+- `/nuevo Omega redacta y envia un correo a usuario@dominio.com con asunto Seguimiento`
+- `/nuevo Omega responde a este correo con un mensaje breve y envialo`
 
 ## Envio de archivos a Telegram
 
@@ -308,6 +472,23 @@ powershell -ExecutionPolicy Bypass -File .\scripts\install-startup-task.ps1
 Start-ScheduledTask -TaskName CodexTelegramBridge
 ```
 
+### Reinicio rapido con BAT
+
+Si quieres recompilar, dejar actualizada la tarea programada y reiniciar el bridge de una vez, puedes usar:
+
+```bat
+scripts\restart-bridge.bat
+```
+
+Este `.bat` hace tres cosas:
+
+- ejecuta `npm run build`
+- intenta registrar o actualizar la tarea `CodexTelegramBridge`
+- si Windows no deja crear la tarea, instala un acceso directo oculto en la carpeta `Inicio` del usuario
+- la reinicia y te muestra su estado
+
+Ademas deja el bridge configurado para iniciarse automaticamente al iniciar sesion en Windows, incluso sin permisos de administrador.
+
 ### Ver estado
 
 ```powershell
@@ -347,13 +528,16 @@ El script [scripts/start-bridge.ps1](scripts/start-bridge.ps1) reinicia el proce
 ## Limitaciones actuales
 
 - Depende de una instalacion local de Codex ya autenticada
-- Usa `codex exec` y `codex exec resume`, no `app-server`
+- Usa `codex app-server` como transporte principal; `exec` queda como fallback configurable
 - El estado persistente esta en JSON, no en SQLite
 - Esta pensado para Windows y uso local
+- Las skills locales ya se pueden pasar al runtime de forma nativa con `app-server`
+- Los conectores curados tipo Gmail, Google Drive y Google Calendar siguen sin quedar expuestos como herramientas efectivas para el bridge aunque el plugin este habilitado en Codex
+- Gmail ya tiene una integracion propia por sesion web local para lectura, busqueda y envio; Google Drive aun no
 
 ## Roadmap
 
-- Migrar el adaptador a `codex app-server`
+- Conseguir que `app-server` exponga conectores curados como Gmail y Google Drive dentro del bridge
 - Anadir aprobaciones para acciones sensibles
 - Anadir cancelacion y plantillas de tareas
 - Mover el estado a SQLite

@@ -12,6 +12,11 @@
       "forceNewThreadOnEachRun": false,
       "allowedTelegramUserIds": [123456789],
       "allowedChatIds": [],
+      "permissions": {
+        "webAccess": false,
+        "gmailAccess": false
+      },
+      "allowedSkills": ["*"],
       "addDirs": [
         "D:\\Users\\YourUser\\Desktop",
         "D:\\Repos\\my-project",
@@ -37,6 +42,11 @@
       "forceNewThreadOnEachRun": false,
       "allowedTelegramUserIds": [123456789],
       "allowedChatIds": [],
+      "permissions": {
+        "webAccess": false,
+        "gmailAccess": false
+      },
+      "allowedSkills": ["aspnet-core"],
       "addDirs": [
         "D:\\Users\\YourUser\\Desktop"
       ],
@@ -58,6 +68,11 @@
       "forceNewThreadOnEachRun": false,
       "allowedTelegramUserIds": [123456789],
       "allowedChatIds": [],
+      "permissions": {
+        "webAccess": false,
+        "gmailAccess": false
+      },
+      "allowedSkills": ["telegram-codex-bridge"],
       "addDirs": [
         "D:\\Users\\YourUser\\Desktop"
       ],
